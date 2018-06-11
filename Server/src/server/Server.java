@@ -10,6 +10,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,10 +22,9 @@ import java.util.logging.Logger;
  */
 public class Server {
 
-    
     private ServerSocket serverSocket;
-    
-    private void criarServerSocket(int porta){
+
+    private void criarServerSocket(int porta) {
         try {
             serverSocket = new ServerSocket(porta);
         } catch (IOException ex) {
@@ -31,64 +32,77 @@ public class Server {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    private Socket esperarConexao() throws IOException{
-       Socket socket =  serverSocket.accept();
-       return socket;
+
+    private Socket esperarConexao() throws IOException {
+        Socket socket = serverSocket.accept();
+        return socket;
     }
-    
-    
-    private void tratarConexao(Socket socket) throws IOException{
-        try{
+
+    private void tratarConexao(Socket socket) throws IOException {
+        String msgClient = "";
+        String msgServer = "";
+        SimpleDateFormat formato = new SimpleDateFormat("HH:mm:ss");
+        try {
             ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
             Scanner s = new Scanner(System.in);
 //protocolo
 
-            String msg = input.readUTF();
-        
-            System.out.println("Mensagem recebida...");
-        System.out.println("Mensagem recebida:"+msg);
-        
-            //output.writeUTF(s.next());
-            output.writeUTF("Hello World");
-            output.flush();
-      
-      
-      
-            input.close();
-            output.close();
-        }catch(IOException e){
-            System.out.println("erro metodo tratar conexão");
-        }finally{
-            System.out.println("fechando socket");
+            while (true) {
+                msgClient = input.readUTF();
+                System.out.println("-------------------------------------");
+                System.out.println("Client[" + formato.format(new Date()) + "]:" + msgClient);
+                System.out.println("-------------------------------------");
+                System.out.print("Você:");
+
+                msgServer = s.nextLine();
+
+                if (msgServer.equalsIgnoreCase("sair")|| msgClient.equalsIgnoreCase("sair")) {
+                    break;
+                }
+
+                output.writeUTF(msgServer);
+                output.flush();
+
+            }
+
             fecharSocket(socket);
+            System.out.println("Cliente finalizado.");
+
+            // input.close();
+            //output.close();
+        } catch (IOException e) {
+            System.out.println("erro metodo tratar conexão");
+        } finally {
+            // System.out.println("fechando socket");
+            // fecharSocket(socket);
         }
     }
-    
-    private void fecharSocket(Socket socket) throws IOException{
-        socket.close();        
+
+    private void fecharSocket(Socket socket) throws IOException {
+        socket.close();
     }
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        try{
+        try {
             Server server = new Server();
+            String msg;
             System.out.println("Aguardando conexão...");
             server.criarServerSocket(5555);
-            
-            while(true){//permitir atender mais de um cliente
+
+            //permitir atender mais de um cliente
             Socket socket = server.esperarConexao();//protocolo
             System.out.println("Cliente conectado.");
             server.tratarConexao(socket);
-            System.out.println("Cliente finalizado.");
-            }
-        }catch(IOException io){
+
+        } catch (IOException io) {
             System.out.println("erro na main");
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, io);           
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, io);
         }
     }
-    
+
 }
